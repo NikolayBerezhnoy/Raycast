@@ -1,8 +1,13 @@
+import os
+import sys
 import math
 import pygame
 import maps
 import time
 import pyautogui
+
+pygame.init()
+
 
 FPS = 140
 
@@ -21,10 +26,11 @@ move_x, move_y = 0, 0
 move_angle = 0
 scope = False
 
-pygame.init()
 clock = pygame.time.Clock()
 
 screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+
+
 pygame.display.set_caption("game")
 MOVE_TIMER = pygame.USEREVENT + 1
 pygame.time.set_timer(MOVE_TIMER, 1)
@@ -32,9 +38,20 @@ pygame.time.set_timer(MOVE_TIMER, 1)
 CAMERA_TIMER = pygame.USEREVENT + 2
 pygame.time.set_timer(CAMERA_TIMER, 30)
 
+
+dog_surf = pygame.image.load(os.path.join('Images', "gun.png"))
+dog_surf.set_colorkey((255, 255, 255))
+dog_rect = dog_surf.get_rect(bottomright=(width, height))
+
+gun_scope_surf = pygame.image.load(os.path.join('Images', "gun_scope.png"))
+gun_scope_surf.set_colorkey((255, 255, 255))
+gun_scope_rect = gun_scope_surf.get_rect(bottomright=(width, height))
+
 running = True
 
 mx0, my0 = pygame.mouse.get_pos()
+update_move_dir_fd = False
+update_move_dir_bk = False
 
 while running:
     #convert angle
@@ -49,12 +66,6 @@ while running:
     if math_angle < 0:
         math_angle = 360 + math_angle
     
-    #+ view_angle to math_angle
-    # if math_angle >= 0:
-    #     math_angle += view_angle / 2
-    # else:
-    #     math_angle -= view_angle / 2
-
     #correct angle
     if turn_angle >= 0 and turn_angle <= 10:
         turn_angle = -360
@@ -109,7 +120,7 @@ while running:
 
     #print(move_x, move_y)
     mx, my=pygame.mouse.get_pos()
-    print(math_angle)
+    #print(math_angle)
     offset = height - my - height / 3
 
     if mx0 != mx:
@@ -123,14 +134,49 @@ while running:
     mx0, my0 = pygame.mouse.get_pos()
 
     if scope:
-        pygame.draw.line(screen, (0, 255, 0), [width / 2, height / 10 * 4.5], [width / 2, height / 10 * 5.5], 2)
-        pygame.draw.line(screen, (0, 255, 0), [width / 10 * 4.5, height / 2], [width / 10 * 5.5, height / 2], 2)
+        #print(gun_scope)
+        #pygame.draw.line(screen, (0, 255, 0), [width / 2, height / 10 * 4.5], [width / 2, height / 10 * 5.5], 2)
+        #pygame.draw.line(screen, (0, 255, 0), [width / 10 * 4.5, height / 2], [width / 10 * 5.5, height / 2], 2)
+        scale = pygame.transform.scale(
+        gun_scope_surf, (gun_scope_surf.get_width() // 1,
+               gun_scope_surf.get_height() // 1))
+        scale_rect = scale.get_rect(bottomright=(width / 2 + 200, height))
+        screen.blit(scale, scale_rect)
+
+    else:
+        scale = pygame.transform.scale(
+        dog_surf, (dog_surf.get_width() // 1,
+               dog_surf.get_height() // 1))
+        scale_rect = scale.get_rect(bottomright=(width + 50, height))
+        screen.blit(scale, scale_rect)
+    
+    if update_move_dir_fd:
+        if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
+            move_x = 0.01
+        else:
+            move_x = -0.01
+        if round(math.cos(math.radians(math_angle)), 3) > 0:
+            move_y = 0.01
+        else:
+            move_y = -0.01
+
+    if update_move_dir_bk:
+        if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
+            move_x = -0.01
+        else:
+            move_x = 0.01
+        if round(math.cos(math.radians(math_angle)), 3) > 0:
+            move_y = -0.01
+        else:
+            move_y = 0.01
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                pygame.draw.line(screen, (255, 0, 0), [width/3*2, height], [width / 2, height / 2], 10)
+                #pygame.draw.line(screen, (255, 0, 0), [width/3*2, height], [width / 2, height / 2], 10)
+                pass
             elif event.button == 3:
                 scope = True
         if event.type == pygame.MOUSEBUTTONUP:
@@ -141,6 +187,7 @@ while running:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP or event.key == pygame.K_w:
+                update_move_dir_fd = True
                 if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
                     move_x = 0.01
                 else:
@@ -151,6 +198,7 @@ while running:
                     move_y = -0.01
 
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                update_move_dir_bk = True
                 if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
                     move_x = -0.01
                 else:
@@ -160,10 +208,10 @@ while running:
                 else:
                     move_y = 0.01
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                #move_angle = -3
+                #turn_angle -= 3
                 pass
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                #move_angle = 3
+                #turn_angle += 3
                 pass
 
         if event.type == CAMERA_TIMER:
@@ -175,8 +223,10 @@ while running:
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_UP or event.key == pygame.K_w:
+                update_move_dir_fd = False
                 move_x, move_y = 0, 0
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                update_move_dir_bk = False
                 move_x, move_y = 0, 0
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 #move_angle = 0
@@ -185,5 +235,6 @@ while running:
                 #move_angle = 0
                 pass
     
+
     clock.tick(FPS)
     pygame.display.flip()
