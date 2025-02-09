@@ -14,6 +14,7 @@ p_y = 1
 offset = 0
 turn_angle = -360
 view_angle = 100
+math_angle = turn_angle
 raycast_step = 1
 ray_len = 50
 move_x, move_y = 0, 0
@@ -36,6 +37,30 @@ running = True
 mx0, my0 = pygame.mouse.get_pos()
 
 while running:
+    #convert angle
+    if turn_angle < -360 and turn_angle >= -720:
+        math_angle = -(turn_angle + 360)
+    if turn_angle >= -360 and turn_angle <= 0:
+        math_angle = -(360 + turn_angle)
+    if math_angle < 0:
+        math_angle = 360 + math_angle
+    math_angle -= view_angle / 2
+
+    if math_angle < 0:
+        math_angle = 360 + math_angle
+    
+    #+ view_angle to math_angle
+    # if math_angle >= 0:
+    #     math_angle += view_angle / 2
+    # else:
+    #     math_angle -= view_angle / 2
+
+    #correct angle
+    if turn_angle >= 0 and turn_angle <= 10:
+        turn_angle = -360
+    if turn_angle <= -720 and turn_angle <= -740:
+        turn_angle = -360 
+        
     width, height = screen.get_size()
     screen.fill((0, 0, 0))
     #pygame.draw.rect(screen, (255, 0, 0), (10, 10, 100, 10), 0)
@@ -63,6 +88,9 @@ while running:
                     pygame.draw.rect(screen, (gray_scale, gray_scale, gray_scale),
                                     ((width/view_angle)*(current_angle-turn_angle), (height/2)-height/(2*distance)+offset,
                                         width/100, height/distance), 0)
+                    pygame.draw.rect(screen, (112, 156, 122),
+                                    ((width/view_angle)*(current_angle-turn_angle), (height/2)-height/(2*distance)+offset + height/distance,
+                                        width/100, height), 0)
 
                     break
                 if maps.map1[x][y] == "#":#Obstacle
@@ -73,12 +101,15 @@ while running:
                     pygame.draw.rect(screen, (gray_scale, gray_scale, 255),
                                     ((width/view_angle)*(current_angle-turn_angle), (height / 2)-height/(2/3*distance)+offset,
                                         width/100, 3* height / distance), 0)
+                    pygame.draw.rect(screen, (112, 156, 122),
+                                    ((width/view_angle)*(current_angle-turn_angle), (height/2)-height/(2*distance)+offset + height/distance,
+                                        width/100, height), 0)
 
                     break
 
     #print(move_x, move_y)
     mx, my=pygame.mouse.get_pos()
-    print(turn_angle, math.radians(turn_angle))
+    print(math_angle)
     offset = height - my - height / 3
 
     if mx0 != mx:
@@ -110,9 +141,24 @@ while running:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP or event.key == pygame.K_w:
-                move_x, move_y = 0.01, 0.01
+                if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
+                    move_x = 0.01
+                else:
+                    move_x = -0.01
+                if round(math.cos(math.radians(math_angle)), 3) > 0:
+                    move_y = 0.01
+                else:
+                    move_y = -0.01
+
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                move_x, move_y = -0.01, -0.01
+                if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
+                    move_x = -0.01
+                else:
+                    move_x = 0.01
+                if round(math.cos(math.radians(math_angle)), 3) > 0:
+                    move_y = -0.01
+                else:
+                    move_y = 0.01
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 #move_angle = -3
                 pass
