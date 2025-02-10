@@ -14,6 +14,7 @@ FPS = 140
 width = 1200
 height = 800
 
+player_speed = 0.015
 p_x = 1
 p_y = 1
 offset = 0
@@ -65,7 +66,7 @@ while running:
 
     if math_angle < 0:
         math_angle = 360 + math_angle
-    
+    math_angle += 90
     #correct angle
     if turn_angle >= 0 and turn_angle <= 10:
         turn_angle = -360
@@ -120,7 +121,7 @@ while running:
 
     #print(move_x, move_y)
     mx, my=pygame.mouse.get_pos()
-    #print(math_angle)
+    print(math_angle)
     offset = height - my - height / 3
 
     if mx0 != mx:
@@ -151,24 +152,18 @@ while running:
         screen.blit(scale, scale_rect)
     
     if update_move_dir_fd:
-        if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
-            move_x = 0.01
-        else:
-            move_x = -0.01
-        if round(math.cos(math.radians(math_angle)), 3) > 0:
-            move_y = 0.01
-        else:
-            move_y = -0.01
+        move_y = player_speed * math.sin(math.radians(math_angle))
+        move_x = player_speed * math.cos(math.radians(math_angle))
 
     if update_move_dir_bk:
         if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
-            move_x = -0.01
+            move_x = -player_speed
         else:
-            move_x = 0.01
+            move_x = player_speed
         if round(math.cos(math.radians(math_angle)), 3) > 0:
-            move_y = -0.01
+            move_y = -player_speed
         else:
-            move_y = 0.01
+            move_y = player_speed
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -188,25 +183,27 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP or event.key == pygame.K_w:
                 update_move_dir_fd = True
-                if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
-                    move_x = 0.01
-                else:
-                    move_x = -0.01
-                if round(math.cos(math.radians(math_angle)), 3) > 0:
-                    move_y = 0.01
-                else:
-                    move_y = -0.01
+                # if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
+                #     move_x = 0.01
+                # else:
+                #     move_x = -0.01
+                # if round(math.cos(math.radians(math_angle)), 3) > 0:
+                #     move_y = 0.01
+                # else:
+                #     move_y = -0.01
+                move_y = player_speed * math.sin(math.radians(math_angle))
+                move_x = player_speed * math.cos(math.radians(math_angle))
 
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                 update_move_dir_bk = True
                 if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
-                    move_x = -0.01
+                    move_x = -player_speed
                 else:
-                    move_x = 0.01
+                    move_x = player_speed
                 if round(math.cos(math.radians(math_angle)), 3) > 0:
-                    move_y = -0.01
+                    move_y = -player_speed
                 else:
-                    move_y = 0.01
+                    move_y = player_speed
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 #turn_angle -= 3
                 pass
