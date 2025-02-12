@@ -3,11 +3,37 @@ import sys
 import math
 import pygame
 import maps
+import random
 import time
 import pyautogui
 
 pygame.init()
 
+######################################
+class Square:
+    def __init__(self, x, y):
+        size = random.randint(1, 15)
+        self.rect = pygame.Rect(x, y, size, size)
+        self.speed = random.uniform(6, 7)
+        self.angle = random.uniform(180, 360)  # Угол от 0 до 360 градусов
+        self.dx = self.speed * math.cos(math.radians(self.angle))
+        self.dy = self.speed * math.sin(math.radians(self.angle))
+        self.lifetime = random.randint(5, 15)  # Длительность жизни квадрата
+
+    def update(self):
+        self.rect.x += self.dx
+        self.rect.y += self.dy
+        self.lifetime -= 1
+
+    def is_alive(self):
+        return self.lifetime > 0
+########################
+
+WHITE = (255, 255, 255)
+YELLOW = (255, 255, 0)
+RED = (255, 0, 0)
+GRASS = (203, 203, 203)
+GREY = (224, 224, 224)
 
 FPS = 140
 
@@ -53,6 +79,10 @@ running = True
 mx0, my0 = pygame.mouse.get_pos()
 update_move_dir_fd = False
 update_move_dir_bk = False
+update_move_dir_lt = False
+update_move_dir_rt = False
+
+squares = []#particles
 
 while running:
     #convert angle
@@ -95,12 +125,12 @@ while running:
                 if maps.map1[x][y] == "^":#Walls
                     #print(distance, current_angle)
                     gray_scale = 1200 / distance
-                    if gray_scale > 255: 
-                        gray_scale = 255
+                    if gray_scale > 100: 
+                        gray_scale = 100
                     pygame.draw.rect(screen, (gray_scale, gray_scale, gray_scale),
                                     ((width/view_angle)*(current_angle-turn_angle), (height/2)-height/(2*distance)+offset,
                                         width/100, height/distance), 0)
-                    pygame.draw.rect(screen, (112, 156, 122),
+                    pygame.draw.rect(screen, GRASS,
                                     ((width/view_angle)*(current_angle-turn_angle), (height/2)-height/(2*distance)+offset + height/distance,
                                         width/100, height), 0)
 
@@ -108,12 +138,12 @@ while running:
                 if maps.map1[x][y] == "#":#Obstacle
                     #print(distance, current_angle)
                     gray_scale = 1200 / distance
-                    if gray_scale > 255: 
-                        gray_scale = 255
-                    pygame.draw.rect(screen, (gray_scale, gray_scale, 255),
+                    if gray_scale > 100: 
+                        gray_scale = 100
+                    pygame.draw.rect(screen, (255, gray_scale, gray_scale),#Object
                                     ((width/view_angle)*(current_angle-turn_angle), (height / 2)-height/(2/3*distance)+offset,
                                         width/100, 3* height / distance), 0)
-                    pygame.draw.rect(screen, (112, 156, 122),
+                    pygame.draw.rect(screen, GRASS,#Grass
                                     ((width/view_angle)*(current_angle-turn_angle), (height/2)-height/(2*distance)+offset + height/distance,
                                         width/100, height), 0)
 
@@ -151,27 +181,37 @@ while running:
         scale_rect = scale.get_rect(bottomright=(width + 50, height))
         screen.blit(scale, scale_rect)
     
+    move_x, move_y = 0, 0
+    slow = 1
+
     if update_move_dir_fd:
         move_y = player_speed * math.sin(math.radians(math_angle))
         move_x = player_speed * math.cos(math.radians(math_angle))
+        slow = 4
 
     if update_move_dir_bk:
-        if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
-            move_x = -player_speed
-        else:
-            move_x = player_speed
-        if round(math.cos(math.radians(math_angle)), 3) > 0:
-            move_y = -player_speed
-        else:
-            move_y = player_speed
+        move_y = -player_speed * math.sin(math.radians(math_angle))
+        move_x = -player_speed * math.cos(math.radians(math_angle))
+        slow = 4
+
+
+    if update_move_dir_rt:
+        move_y += player_speed * math.sin(math.radians(math_angle - 90)) / slow
+        move_x += player_speed * math.cos(math.radians(math_angle - 90)) / slow
+
+    if update_move_dir_lt:
+        move_y += player_speed * math.sin(math.radians(math_angle + 90)) / slow
+        move_x += player_speed * math.cos(math.radians(math_angle + 90)) / slow
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                #pygame.draw.line(screen, (255, 0, 0), [width/3*2, height], [width / 2, height / 2], 10)
-                pass
+                mx_shoot, my_shoot = pygame.mouse.get_pos()
+                for _ in range(25):  # Particles
+                    squares.append(Square(width / 2, height * 0.55))
+
             elif event.button == 3:
                 scope = True
         if event.type == pygame.MOUSEBUTTONUP:
@@ -183,33 +223,23 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP or event.key == pygame.K_w:
                 update_move_dir_fd = True
-                # if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
-                #     move_x = 0.01
-                # else:
-                #     move_x = -0.01
-                # if round(math.cos(math.radians(math_angle)), 3) > 0:
-                #     move_y = 0.01
-                # else:
-                #     move_y = -0.01
+
                 move_y = player_speed * math.sin(math.radians(math_angle))
                 move_x = player_speed * math.cos(math.radians(math_angle))
 
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                 update_move_dir_bk = True
-                if -(round(math.sin(math.radians(math_angle)), 3)) > 0:
-                    move_x = -player_speed
-                else:
-                    move_x = player_speed
-                if round(math.cos(math.radians(math_angle)), 3) > 0:
-                    move_y = -player_speed
-                else:
-                    move_y = player_speed
+
+                move_y = -player_speed * math.sin(math.radians(math_angle))
+                move_x = -player_speed * math.cos(math.radians(math_angle))
+                
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                #turn_angle -= 3
-                pass
+                update_move_dir_lt = True
+
+                
+  
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                #turn_angle += 3
-                pass
+                update_move_dir_rt = True
 
         if event.type == CAMERA_TIMER:
                 turn_angle += move_angle
@@ -226,12 +256,21 @@ while running:
                 update_move_dir_bk = False
                 move_x, move_y = 0, 0
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                #move_angle = 0
-                pass
+                update_move_dir_lt = False
+                move_x, move_y = 0, 0
+
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                #move_angle = 0
-                pass
+                update_move_dir_rt = False
+                move_x, move_y = 0, 0
     
+
+    for square in squares[:]:#Update particles
+            square.update()
+            if not square.is_alive():
+                squares.remove(square)
+    for square in squares:
+            pygame.draw.rect(screen, random.choice([RED, GREY, YELLOW, GREY, YELLOW]), square.rect)
+
 
     clock.tick(FPS)
     pygame.display.flip()
