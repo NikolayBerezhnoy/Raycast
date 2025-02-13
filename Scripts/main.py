@@ -10,15 +10,26 @@ import pyautogui
 pygame.init()
 
 ######################################
+class Enemy:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.hp = 100
+        self.speed = 0.01
+
+    def update(self):
+        pass
+
+    
 class Square:
     def __init__(self, x, y):
         size = random.randint(1, 15)
         self.rect = pygame.Rect(x, y, size, size)
         self.speed = random.uniform(6, 7)
-        self.angle = random.uniform(180, 360)  # Угол от 0 до 360 градусов
+        self.angle = random.uniform(180, 360) 
         self.dx = self.speed * math.cos(math.radians(self.angle))
         self.dy = self.speed * math.sin(math.radians(self.angle))
-        self.lifetime = random.randint(5, 15)  # Длительность жизни квадрата
+        self.lifetime = random.randint(5, 15) 
 
     def update(self):
         self.rect.x += self.dx
